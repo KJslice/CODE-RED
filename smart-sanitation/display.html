@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="refresh" content="30"/>
+<title>SmartSanitation · Display Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#030912;color:#fff;font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,180,216,0.04)1px,transparent 1px),linear-gradient(90deg,rgba(0,180,216,0.04)1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+.header{background:linear-gradient(135deg,#0B6E4F,#1a9a6f);padding:20px 40px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:26px}
+.header h1{font-size:24px;font-weight:900;letter-spacing:-0.5px}
+.header p{font-size:12px;opacity:0.8;margin-top:2px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em}
+.live-badge{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.25);padding:10px 20px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:13px}
+.pulse{width:10px;height:10px;border-radius:50%;background:#00e676;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.3)}}
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:#070f1a;border-bottom:1px solid #1a2332;position:relative;z-index:1}
+.stat-item{text-align:center;padding:20px;border-right:1px solid #1a2332}
+.stat-item:last-child{border-right:none}
+.stat-num{font-size:40px;font-weight:900;font-family:'JetBrains Mono',monospace;line-height:1}
+.stat-label{font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:0.1em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px;position:relative;z-index:1}
+.card{border-radius:20px;padding:20px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.card.A::before{background:linear-gradient(90deg,#00e676,#00b4d8)}
+.card.B::before{background:linear-gradient(90deg,#ffeb3b,#ff9800)}
+.card.C::before{background:linear-gradient(90deg,#ff9800,#f44336)}
+.card.D::before{background:linear-gradient(90deg,#f44336,#b71c1c)}
+.grade-letter{font-size:64px;font-weight:900;line-height:1;font-family:'JetBrains Mono',monospace}
+.gA{color:#00e676}.gB{color:#ffeb3b}.gC{color:#ff9800}.gD{color:#f44336}
+.card-name{font-size:14px;font-weight:700;margin-top:8px;line-height:1.3}
+.card-area{font-size:11px;color:#6b7280;margin-top:4px;font-family:'JetBrains Mono',monospace}
+.score-row{display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px}
+.score-bar{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+.score-fill{height:100%;border-radius:3px}
+.amenities{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.pill{font-size:10px;padding:3px 8px;border-radius:100px;background:rgba(255,255,255,0.07);color:#94a3b8;border:1px solid rgba(255,255,255,0.08)}
+.alert-banner{display:flex;align-items:center;gap:10px;background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.2);border-radius:12px;padding:12px 20px;margin:8px 32px 0;font-size:13px;color:#fca5a5;position:relative;z-index:1}
+.footer{padding:14px 32px;border-top:1px solid #1a2332;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1}
+.footer-txt{font-size:11px;color:#4b5563;font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">🚻</div>
+    <div>
+      <h1>AI Smart Sanitation Display Board</h1>
+      <p>NAGPUR MUNICIPAL CORPORATION · SWACHH BHARAT DIGITAL · AUTO-REFRESH 30s</p>
+    </div>
+  </div>
+  <div class="live-badge"><div class="pulse"></div>LIVE · <span id="clock">--:--:--</span></div>
+</div>
+<div class="stats-strip">
+  <div class="stat-item"><div class="stat-num gA" id="s1">-</div><div class="stat-label">Open Now</div></div>
+  <div class="stat-item"><div class="stat-num" style="color:#00b4d8" id="s2">-</div><div class="stat-label">Avg Score</div></div>
+  <div class="stat-item"><div class="stat-num gA" id="s3">-</div><div class="stat-label">Grade A</div></div>
+  <div class="stat-item"><div class="stat-num gD" id="s4">-</div><div class="stat-label">Need Attention</div></div>
+</div>
+<div id="alerts"></div>
+<div class="grid" id="grid"></div>
+<div class="footer">
+  <div class="footer-txt">📍 Nagpur, Maharashtra · NMC Smart Sanitation System</div>
+  <div class="footer-txt">Last updated: <span id="upd">--</span></div>
+</div>
+<script>
+const API='http://localhost:5000';
+const GC={A:'#00e676',B:'#ffeb3b',C:'#ff9800',D:'#f44336'};
+setInterval(()=>{const n=new Date();document.getElementById('clock').textContent=n.toLocaleTimeString('en-IN');document.getElementById('upd').textContent=n.toLocaleTimeString('en-IN')},1000);
+async function load(){
+  try{
+    const r=await fetch(`${API}/api/toilets`);
+    const d=await r.json();
+    const t=d.toilets;
+    document.getElementById('s1').textContent=t.filter(x=>x.status==='Open').length;
+    document.getElementById('s2').textContent=Math.round(t.reduce((s,x)=>s+x.score,0)/t.length);
+    document.getElementById('s3').textContent=t.filter(x=>x.grade==='A').length;
+    document.getElementById('s4').textContent=t.filter(x=>x.alert||x.grade==='D').length;
+    document.getElementById('alerts').innerHTML=t.filter(x=>x.alert||x.grade==='D').map(x=>`<div class="alert-banner">🚨 <strong>${x.name}</strong> — Grade ${x.grade} · ${x.issues?.join(', ')||'Needs attention'}</div>`).join('');
+    document.getElementById('grid').innerHTML=t.map(x=>`
+      <div class="card ${x.grade}">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="grade-letter g${x.grade}">${x.grade}</div>
+          <div style="text-align:right;font-size:11px;color:#6b7280;font-family:'JetBrains Mono',monospace">
+            <div style="color:${x.status==='Open'?'#00e676':'#ff9800'}">${x.status==='Open'?'● OPEN':'● '+x.status.toUpperCase()}</div>
+            <div style="margin-top:4px">⭐ ${x.rating} (${x.reviews})</div>
+          </div>
+        </div>
+        <div class="card-name">${x.name}</div>
+        <div class="card-area">📍 ${x.area} · ${x.distance}km</div>
+        <div class="score-row"><span style="font-size:11px;color:#6b7280">Hygiene Score</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:${GC[x.grade]}">${x.score}/100</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:${x.score}%;background:${GC[x.grade]}"></div></div>
+        <div class="amenities">
+          ${x.water?'<span class="pill">💧 Water</span>':''}
+          ${x.soap?'<span class="pill">🧼 Soap</span>':''}
+          ${x.wheelchair?'<span class="pill">♿</span>':''}
+          ${x.handDryer?'<span class="pill">🌬️ Dryer</span>':''}
+        </div>
+        <div style="font-size:11px;color:#6b7280;margin-top:8px;font-family:'JetBrains Mono',monospace">🕐 ${x.lastCleaned}</div>
+        ${x.issues?.length?`<div style="font-size:11px;color:#f87171;margin-top:6px">⚠️ ${x.issues.join(' · ')}</div>`:''}
+      </div>`).join('');
+  }catch(e){document.getElementById('grid').innerHTML='<p style="color:#f44336;padding:20px;grid-column:1/-1">⚠️ Server se connect nahi ho pa raha. node server.js chala rahe ho?</p>'}
+}
+load();setInterval(load,30000);
+</script>
+</body>
+</html>

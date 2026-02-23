@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>SmartToilet · NMC</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#030912;color:#e8edf5;font-family:'Outfit',sans-serif;max-width:430px;margin:0 auto;min-height:100vh;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,180,216,0.04)1px,transparent 1px),linear-gradient(90deg,rgba(0,180,216,0.04)1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.screen{display:none;min-height:100vh;position:relative;z-index:1}
+.screen.active{display:block}
+
+/* LOGIN */
+.login-wrap{padding:40px 20px 20px;display:flex;flex-direction:column;min-height:100vh}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo .icon{font-size:48px}
+.login-logo h1{font-size:26px;font-weight:900;color:#fff;margin-top:8px;font-family:'JetBrains Mono',monospace}
+.login-logo p{font-size:10px;color:#00b4d8;letter-spacing:0.15em;margin-top:4px}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.role-btn{padding:12px 8px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);cursor:pointer;text-align:center;transition:all 0.2s}
+.role-btn.active{background:rgba(0,180,216,0.15);border-color:#00b4d8}
+.role-btn .ri{font-size:22px;margin-bottom:6px}
+.role-btn .rl{font-size:11px;font-weight:700;color:#9ca3af}
+.role-btn.active .rl{color:#00b4d8}
+.role-btn .rd{font-size:9px;color:#4b5563;margin-top:2px}
+.form-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px}
+.input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:14px;margin-bottom:10px;font-family:'Outfit',sans-serif;outline:none}
+.input:focus{border-color:#00b4d8}
+.btn-login{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-public{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+.hint{font-size:11px;color:#4b5563;text-align:center;margin-top:10px;font-family:'JetBrains Mono',monospace}
+.error{color:#f44336;font-size:12px;text-align:center;margin-top:8px}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(3,9,18,0.9);border-bottom:1px solid rgba(255,255,255,0.06);position:sticky;top:0;z-index:50;backdrop-filter:blur(10px)}
+.topbar-title{font-size:14px;font-weight:700;color:#fff}
+.topbar-sub{font-size:10px;color:#6b7280;margin-top:1px;font-family:'JetBrains Mono',monospace}
+.logout-btn{padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#94a3b8;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(7,15,26,0.97);border-top:1px solid rgba(255,255,255,0.07);display:flex;z-index:50;backdrop-filter:blur(10px)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 14px;cursor:pointer;transition:all 0.2s}
+.nav-item .ni{font-size:20px;margin-bottom:3px}
+.nav-item .nl{font-size:10px;color:#4b5563;font-weight:500}
+.nav-item.active .nl{color:#00b4d8}
+
+/* CONTENT */
+.page-content{padding:16px 16px 90px}
+
+/* TOILET CARDS */
+.toilet-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s}
+.toilet-card:active{background:rgba(0,180,216,0.05);border-color:rgba(0,180,216,0.3)}
+.tc-row{display:flex;justify-content:space-between;align-items:start;margin-bottom:8px}
+.tc-name{font-size:14px;font-weight:700;line-height:1.3}
+.tc-meta{font-size:11px;color:#6b7280;margin-top:3px;font-family:'JetBrains Mono',monospace}
+.grade-chip{padding:4px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0}
+.gA{background:rgba(0,230,118,0.12);color:#00e676;border:1px solid rgba(0,230,118,0.2)}
+.gB{background:rgba(255,235,59,0.12);color:#ffeb3b;border:1px solid rgba(255,235,59,0.2)}
+.gC{background:rgba(255,152,0,0.12);color:#ff9800;border:1px solid rgba(255,152,0,0.2)}
+.gD{background:rgba(244,67,54,0.12);color:#f44336;border:1px solid rgba(244,67,54,0.2)}
+.score-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:8px}
+.score-fill{height:100%;border-radius:2px}
+.pill-row{display:flex;gap:5px;flex-wrap:wrap}
+.sm-pill{font-size:9px;padding:2px 7px;border-radius:100px;background:rgba(255,255,255,0.05);color:#6b7280}
+.issue-txt{font-size:11px;color:#f87171;margin-top:6px}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:#f44336;display:inline-block;margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* SEARCH */
+.search-bar{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.search-bar input{flex:1;background:transparent;border:none;color:#fff;font-size:14px;outline:none;font-family:'Outfit',sans-serif}
+.search-bar input::placeholder{color:#4b5563}
+
+/* FILTER PILLS */
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#6b7280;white-space:nowrap;transition:all 0.2s;font-family:'Outfit',sans-serif}
+.filter-pill.active{background:rgba(0,180,216,0.15);border-color:#00b4d8;color:#00b4d8}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed rgba(0,230,118,0.3);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;background:rgba(0,230,118,0.03);transition:all 0.3s;margin-bottom:12px;position:relative}
+.upload-zone:active{background:rgba(0,230,118,0.07);border-color:rgba(0,230,118,0.6)}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+.preview-img{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;border:1px solid rgba(255,255,255,0.08)}
+.btn-ai{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;margin-bottom:10px}
+.btn-ai:disabled{opacity:0.4;cursor:not-allowed}
+
+/* AI RESULT */
+.ai-result{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin-top:12px}
+.big-grade{font-size:72px;font-weight:900;text-align:center;font-family:'JetBrains Mono',monospace;line-height:1}
+.issue-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.15);margin-bottom:5px;font-size:12px}
+.btn-submit{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#00e676,#00b4d8);color:#000;font-size:14px;font-weight:900;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:12px}
+
+/* MAP PLACEHOLDER */
+.map-placeholder{border-radius:16px;overflow:hidden;position:relative;height:300px;background:#0d1929;border:1px solid rgba(255,255,255,0.07);margin-bottom:12px}
+.map-svg{width:100%;height:100%}
+.map-pin{cursor:pointer;transition:transform 0.2s}
+.map-pin:hover{transform:scale(1.2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);padding:11px 22px;border-radius:100px;font-weight:700;font-size:13px;z-index:999;display:none;white-space:nowrap;font-family:'JetBrains Mono',monospace}
+
+/* SCANNING */
+.scanning{text-align:center;padding:40px 20px}
+.scan-icon{font-size:48px;animation:bob 1s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.scan-bar{height:4px;border-radius:2px;background:rgba(255,255,255,0.06);overflow:hidden;margin:16px 0 8px}
+.scan-fill{height:100%;background:linear-gradient(90deg,#0077b6,#00b4d8);animation:scanPulse 0.8s infinite alternate;border-radius:2px;width:70%}
+@keyframes scanPulse{from{opacity:0.5}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="screen active" id="s-login">
+<div class="login-wrap">
+  <div class="login-logo">
+    <div class="icon">🚻</div>
+    <h1>SmartToilet</h1>
+    <p>NAGPUR MUNICIPAL CORPORATION</p>
+    <div style="font-size:10px;color:#4b5563;margin-top:2px">Swachh Bharat Digital Initiative</div>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <div style="color:#6b7280;font-size:10px;margin-bottom:8px;letter-spacing:0.1em;font-family:'JetBrains Mono',monospace">SELECT ACCESS ROLE</div>
+    <div class="role-grid">
+      <div class="role-btn active" id="role-public" onclick="selectRole('public')">
+        <div class="ri">🌏</div>
+        <div class="rl">Public</div>
+        <div class="rd">Browse & find</div>
+      </div>
+      <div class="role-btn" id="role-employee" onclick="selectRole('employee')">
+        <div class="ri">🧹</div>
+        <div class="rl">Employee</div>
+        <div class="rd">Upload photos</div>
+      </div>
+      <div class="role-btn" id="role-admin" onclick="selectRole('admin')">
+        <div class="ri">🛡️</div>
+        <div class="rl">Admin</div>
+        <div class="rd">Govt access</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-box">
+    <div id="public-form">
+      <button class="btn-public" onclick="loginPublic()">🌏 Continue as Public →</button>
+    </div>
+    <div id="cred-form" style="display:none">
+      <input class="input" id="email" placeholder="Email" type="email"/>
+      <input class="input" id="pass" placeholder="Password" type="password"/>
+      <button class="btn-login" onclick="doLogin()">Login →</button>
+      <div class="hint" id="hint">suresh@nmc.gov.in / emp001</div>
+    </div>
+    <div id="err" class="error"></div>
+  </div>
+</div>
+</div>
+
+<!-- PUBLIC MAP SCREEN -->
+<div class="screen" id="s-public">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🚻 SmartToilet</div>
+      <div class="topbar-sub">📍 Nagpur · <span id="pub-name">Citizen</span></div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div id="pub-map-tab" class="page-content">
+    <!-- Map -->
+    <div class="map-placeholder">
+      <svg class="map-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <rect width="100" height="100" fill="#0a1628"/>
+        <rect x="0" y="0" width="100" height="100" fill="#0d1f3c" opacity="0.5"/>
+        <!-- Roads -->
+        <line x1="0" y1="50" x2="100" y2="50" stroke="#1a2e4a" stroke-width="2.5"/>
+        <line x1="50" y1="0" x2="50" y2="100" stroke="#1a2e4a" stroke-width="2.5"/>
+        <line x1="0" y1="28" x2="100" y2="35" stroke="#1a2e4a" stroke-width="1.5"/>
+        <line x1="0" y1="70" x2="100" y2="68" stroke="#1a2e4a" stroke-width="1.5"/>
+        <line x1="20" y1="0" x2="28" y2="100" stroke="#1a2e4a" stroke-width="1.5"/>
+        <line x1="72" y1="0" x2="76" y2="100" stroke="#1a2e4a" stroke-width="1.5"/>
+        <!-- Area labels -->
+        <text x="50" y="44" text-anchor="middle" fill="#2a4a6a" font-size="2.5" font-family="sans-serif">SITABULDI</text>
+        <text x="44" y="54" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">SADAR</text>
+        <text x="67" y="46" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">GANDHIBAGH</text>
+        <text x="33" y="36" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">ITWARI</text>
+        <text x="26" y="59" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">DHARAMPETH</text>
+        <text x="61" y="28" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">LAKADGANJ</text>
+        <text x="64" y="70" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">NANDANVAN</text>
+        <text x="47" y="20" text-anchor="middle" fill="#2a4a6a" font-size="2" font-family="sans-serif">COTTON MKT</text>
+        <!-- User location -->
+        <circle cx="50" cy="50" r="3" fill="rgba(26,115,232,0.2)" opacity="0.6">
+          <animate attributeName="r" values="3;6;3" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="50" cy="50" r="2.5" fill="#1a73e8" stroke="#fff" stroke-width="0.8"/>
+        <!-- Pins injected by JS -->
+        <g id="mapPins"></g>
+      </svg>
+    </div>
+
+    <div class="search-bar">
+      <span>🔍</span>
+      <input placeholder="Search area, name..." oninput="filterToilets(this.value)"/>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-pill active" onclick="setFilter('all',this)">All</div>
+      <div class="filter-pill" onclick="setFilter('A',this)">Grade A</div>
+      <div class="filter-pill" onclick="setFilter('B',this)">Grade B</div>
+      <div class="filter-pill" onclick="setFilter('open',this)">Open Now</div>
+      <div class="filter-pill" onclick="setFilter('water',this)">💧 Water</div>
+      <div class="filter-pill" onclick="setFilter('wheelchair',this)">♿</div>
+    </div>
+
+    <div id="pubToilets"><div style="color:#6b7280;text-align:center;padding:40px">Loading...</div></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="pubTab('map')"><div class="ni">🗺️</div><div class="nl">Map</div></div>
+    <div class="nav-item" onclick="pubTab('list')"><div class="ni">📋</div><div class="nl">List</div></div>
+    <div class="nav-item" onclick="pubTab('nearby')"><div class="ni">📍</div><div class="nl">Nearby</div></div>
+  </div>
+</div>
+
+<!-- EMPLOYEE SCREEN -->
+<div class="screen" id="s-employee">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">🧹 <span id="emp-name">Employee</span></div>
+      <div class="topbar-sub" id="emp-zone">Zone --</div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="page-content">
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;background:rgba(255,255,255,0.04);padding:5px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);margin-bottom:16px">
+      <button class="filter-pill active" id="et-upload" onclick="empTab('upload')" style="flex:1;text-align:center">📸 Upload</button>
+      <button class="filter-pill" id="et-toilets" onclick="empTab('toilets')" style="flex:1;text-align:center">🚻 My Toilets</button>
+      <button class="filter-pill" id="et-history" onclick="empTab('history')" style="flex:1;text-align:center">📋 History</button>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="emp-upload">
+      <select id="emp-toilet-sel" class="input">
+        <option value="">Select Toilet...</option>
+      </select>
+
+      <div id="up-idle">
+        <div class="upload-zone" onclick="document.getElementById('photoFile').click()">
+          <input type="file" id="photoFile" multiple accept="image/*" style="display:none" onchange="handlePhotos(event)"/>
+          <div style="font-size:36px;margin-bottom:8px">📷</div>
+          <div style="font-weight:600;font-size:15px">Upload Toilet Photos</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">Tap to select 1–6 images</div>
+        </div>
+      </div>
+
+      <div id="up-preview" style="display:none">
+        <div class="preview-grid" id="prevGrid"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="resetUpload()" style="flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#9ca3af;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif">🗑️ Clear</button>
+          <button class="btn-ai" style="flex:2;margin-bottom:0" id="runAIBtn" onclick="runAI()">🤖 Run AI Analysis</button>
+        </div>
+      </div>
+
+      <div id="up-scanning" style="display:none">
+        <div class="scanning">
+          <div class="scan-icon">🤖</div>
+          <div style="color:#00b4d8;font-weight:700;font-size:15px;margin-top:8px">AI Analyzing Photos...</div>
+          <div style="color:#4b5563;font-size:12px;margin-top:4px;font-family:'JetBrains Mono',monospace">YOLO v8 Object Detection</div>
+          <div class="scan-bar"><div class="scan-fill"></div></div>
+          <div id="scan-steps" style="font-size:11px;color:#4b5563"></div>
+        </div>
+      </div>
+
+      <div id="up-result" style="display:none">
+        <div class="ai-result">
+          <div style="color:#9ca3af;font-size:10px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;letter-spacing:0.1em">🤖 AI ANALYSIS RESULT</div>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+            <div>
+              <div class="big-grade" id="r-grade">A</div>
+              <div id="r-lbl" style="font-size:12px;text-align:center;margin-top:2px"></div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:32px;font-weight:900;font-family:'JetBrains Mono',monospace" id="r-score">94<span style="font-size:14px;color:#4b5563">/100</span></div>
+              <div style="font-size:11px;color:#6b7280;margin-bottom:6px">Hygiene Score</div>
+              <div class="score-bar" style="height:6px"><div class="score-fill" id="r-bar" style="width:0%"></div></div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:#6b7280;margin-bottom:6px;font-family:'JetBrains Mono',monospace">DETECTED ISSUES:</div>
+          <div id="r-issues"></div>
+        </div>
+        <button class="btn-submit" onclick="submitReport()">📤 Submit for Admin Review</button>
+        <button onclick="resetUpload()" style="width:100%;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#6b7280;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:8px">↩ Upload Again</button>
+      </div>
+
+      <div id="up-done" style="display:none;text-align:center;padding:40px 20px">
+        <div style="font-size:56px">✅</div>
+        <div style="color:#00e676;font-weight:700;margin-top:12px;font-size:16px">Submitted!</div>
+        <div style="color:#6b7280;font-size:13px;margin-top:6px">Admin will review & verify</div>
+        <button onclick="resetUpload()" style="margin-top:20px;padding:12px 24px;border-radius:10px;border:none;background:rgba(0,230,118,0.1);color:#00e676;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;border:1px solid rgba(0,230,118,0.2)">Upload Another</button>
+      </div>
+    </div>
+
+    <!-- My Toilets Tab -->
+    <div id="emp-toilets" style="display:none">
+      <div id="myToiletsList"></div>
+    </div>
+
+    <!-- History Tab -->
+    <div id="emp-history" style="display:none">
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="empTab('upload')"><div class="ni">📸</div><div class="nl">Upload</div></div>
+    <div class="nav-item" onclick="empTab('toilets')"><div class="ni">🚻</div><div class="nl">My Toilets</div></div>
+    <div class="nav-item" onclick="empTab('history')"><div class="ni">📋</div><div class="nl">History</div></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://localhost:5000';
+const GC={A:'#00e676',B:'#ffeb3b',C:'#ff9800',D:'#f44336'};
+const GL={A:'Excellent',B:'Good',C:'Average',D:'Poor'};
+const YOLO=[
+  {class:'Heavy Dirt/Stains',deduction:25,icon:'🟤'},
+  {class:'Broken Fixtures',deduction:20,icon:'🔧'},
+  {class:'Waste/Litter',deduction:20,icon:'🗑️'},
+  {class:'No Hygiene Items',deduction:10,icon:'🧴'},
+  {class:'Poor Lighting',deduction:10,icon:'💡'},
+  {class:'Water Puddles',deduction:15,icon:'💧'},
+];
+const EMP_TOILETS={EMP001:[1,3],EMP002:[2,6],EMP003:[4,7],EMP004:[5,8]};
+
+let currentUser=null,allToilets=[],uploadedFiles=[],aiResult=null,curFilter='all',curSearch='';
+
+// ── AUTH ──
+function selectRole(r){
+  ['public','employee','admin'].forEach(x=>{
+    document.getElementById('role-'+x).classList.toggle('active',x===r);
+  });
+  document.getElementById('public-form').style.display=r==='public'?'block':'none';
+  document.getElementById('cred-form').style.display=r!=='public'?'block':'none';
+  document.getElementById('hint').textContent=r==='employee'?'suresh@nmc.gov.in / emp001':r==='admin'?'admin@nmc.gov.in / admin123':'';
+}
+function loginPublic(){
+  currentUser={role:'public',name:'Citizen'};
+  showScreen('s-public');
+  loadPublicToilets();
+}
+async function doLogin(){
+  const role=document.querySelector('.role-btn.active').id.replace('role-','');
+  const email=document.getElementById('email').value;
+  const pass=document.getElementById('pass').value;
+  try{
+    const res=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role,email,password:pass})});
+    const d=await res.json();
+    if(d.success){
+      currentUser=d;
+      if(role==='employee'){
+        document.getElementById('emp-name').textContent=d.name;
+        document.getElementById('emp-zone').textContent='Zone: '+d.zone;
+        // populate toilet select
+        const sel=document.getElementById('emp-toilet-sel');
+        sel.innerHTML='<option value="">Select Toilet...</option>';
+        const ids=EMP_TOILETS[d.id]||[];
+        allToilets.filter(t=>ids.includes(t.id)).forEach(t=>{
+          sel.innerHTML+=`<option value="${t.id}">${t.name}</option>`;
+        });
+        showScreen('s-employee');
+        loadMyToilets(ids);
+      } else if(role==='admin'){
+        toast('🛡️ Admin ko web pe admin.html open karo!','#00b4d8');
+      }
+    } else {
+      document.getElementById('err').textContent='❌ Invalid credentials';
+    }
+  }catch(e){
+    document.getElementById('err').textContent='⚠️ Server se connect nahi ho pa raha';
+  }
+}
+function logout(){currentUser=null;showScreen('s-login');}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+// ── PUBLIC MAP ──
+async function loadPublicToilets(){
+  try{
+    const r=await fetch(`${API}/api/toilets`);
+    const d=await r.json();
+    allToilets=d.toilets;
+    document.getElementById('pub-name').textContent=currentUser?.name||'Citizen';
+    renderPublicToilets();
+    renderMapPins();
+  }catch(e){document.getElementById('pubToilets').innerHTML='<p style="color:#f44336;text-align:center;padding:20px">⚠️ Server connect karo</p>';}
+}
+function renderPublicToilets(){
+  let t=[...allToilets];
+  if(curFilter==='A')t=t.filter(x=>x.grade==='A');
+  else if(curFilter==='B')t=t.filter(x=>x.grade==='B');
+  else if(curFilter==='open')t=t.filter(x=>x.status==='Open');
+  else if(curFilter==='water')t=t.filter(x=>x.water);
+  else if(curFilter==='wheelchair')t=t.filter(x=>x.wheelchair);
+  if(curSearch)t=t.filter(x=>x.name.toLowerCase().includes(curSearch)||x.area.toLowerCase().includes(curSearch));
+  document.getElementById('pubToilets').innerHTML=t.map(x=>`
+    <div class="toilet-card" onclick="rateToilet(${x.id})">
+      <div class="tc-row">
+        <div style="flex:1;padding-right:10px">
+          <div class="tc-name">${x.alert?'<span class="alert-dot"></span>':''} ${x.name}</div>
+          <div class="tc-meta">📍 ${x.area} · ${x.distance}km · ${x.lastCleaned}</div>
+        </div>
+        <span class="grade-chip g${x.grade}">${x.grade} · ${x.score}</span>
+      </div>
+      <div class="score-bar"><div class="score-fill" style="width:${x.score}%;background:${GC[x.grade]}"></div></div>
+      <div class="pill-row">
+        ${x.water?'<span class="sm-pill">💧 Water</span>':''}
+        ${x.soap?'<span class="sm-pill">🧼 Soap</span>':''}
+        ${x.wheelchair?'<span class="sm-pill">♿</span>':''}
+        ${x.handDryer?'<span class="sm-pill">🌬️ Dryer</span>':''}
+        <span class="sm-pill" style="color:${x.status==='Open'?'#00e676':'#ff9800'}">${x.status==='Open'?'🟢 Open':'🔴 '+x.status}</span>
+        ${x.queue>0?`<span class="sm-pill">👥 Queue: ${x.queue}</span>`:''}
+      </div>
+      ${x.issues?.length?`<div class="issue-txt">⚠️ ${x.issues.join(', ')}</div>`:''}
+      <div style="font-size:10px;color:#4b5563;margin-top:6px;text-align:right">⭐ ${x.rating} (${x.reviews} ratings) · Tap to rate</div>
+    </div>`).join('');
+}
+function renderMapPins(){
+  const pins=[
+    {id:1,x:50,y:45},{id:2,x:33,y:38},{id:3,x:44,y:56},{id:4,x:26,y:62},
+    {id:5,x:67,y:48},{id:6,x:61,y:30},{id:7,x:64,y:72},{id:8,x:47,y:22}
+  ];
+  const svg=document.getElementById('mapPins');
+  svg.innerHTML=allToilets.map(t=>{
+    const p=pins.find(x=>x.id===t.id)||{x:50,y:50};
+    const c=GC[t.grade];
+    return `<g class="map-pin" onclick="showPinToast('${t.name}','${t.grade}',${t.score})">
+      <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${c}" stroke="#fff" stroke-width="0.8"/>
+      <text x="${p.x}" y="${p.y+1.2}" text-anchor="middle" fill="#000" font-size="2.8" font-weight="bold" font-family="sans-serif">${t.grade}</text>
+    </g>`;
+  }).join('');
+}
+function showPinToast(name,grade,score){toast(`${name} · Grade ${grade} · ${score}/100`,GC[grade]);}
+function setFilter(f,el){curFilter=f;document.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderPublicToilets();}
+function filterToilets(v){curSearch=v.toLowerCase();renderPublicToilets();}
+async function rateToilet(id){
+  const r=Math.floor(Math.random()*2)+4;
+  try{await fetch(`${API}/api/toilets/${id}/rate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({rating:r})});}catch(e){}
+  toast(`⭐ Rated ${r}/5 stars!`,'#00e676');
+}
+function pubTab(t){/* tabs handled by filter */}
+
+// ── EMPLOYEE ──
+function empTab(t){
+  ['upload','toilets','history'].forEach(x=>{
+    document.getElementById('emp-'+x).style.display=x===t?'block':'none';
+    document.getElementById('et-'+x)?.classList.toggle('active',x===t);
+  });
+  document.querySelectorAll('#s-employee .bottom-nav .nav-item').forEach((el,i)=>el.classList.toggle('active',['upload','toilets','history'][i]===t));
+}
+function loadMyToilets(ids){
+  const mine=allToilets.filter(t=>ids.includes(t.id));
+  document.getElementById('myToiletsList').innerHTML=mine.map(x=>`
+    <div class="toilet-card">
+      <div class="tc-row">
+        <div style="flex:1;padding-right:10px"><div class="tc-name">${x.name}</div><div class="tc-meta">${x.area} · Code: <span style="color:#00b4d8;font-family:'JetBrains Mono',monospace">${x.displayCode||'NMC-'+x.id}</span></div></div>
+        <span class="grade-chip g${x.grade}">${x.grade} · ${x.score}</span>
+      </div>
+      <div class="pill-row">
+        ${x.water?'<span class="sm-pill">💧</span>':''}
+        ${x.soap?'<span class="sm-pill">🧼</span>':''}
+        <span class="sm-pill" style="color:${x.status==='Open'?'#00e676':'#ff9800'}">${x.status}</span>
+      </div>
+      ${x.issues?.length?`<div class="issue-txt">⚠️ ${x.issues.join(', ')}</div>`:''}
+    </div>`).join('');
+
+  document.getElementById('historyList').innerHTML=`
+    <div class="toilet-card"><div style="color:#6b7280;font-size:13px;text-align:center;padding:20px">📋 Upload history will appear here after you submit reports</div></div>`;
+}
+function handlePhotos(e){
+  uploadedFiles=[...e.target.files].slice(0,6);
+  if(!uploadedFiles.length)return;
+  document.getElementById('up-idle').style.display='none';
+  document.getElementById('up-preview').style.display='block';
+  document.getElementById('prevGrid').innerHTML=uploadedFiles.map(f=>`<img src="${URL.createObjectURL(f)}" class="preview-img"/>`).join('');
+}
+function resetUpload(){
+  uploadedFiles=[];aiResult=null;
+  document.getElementById('photoFile').value='';
+  ['idle','preview','scanning','result','done'].forEach(s=>document.getElementById('up-'+s).style.display=s==='idle'?'block':'none');
+}
+async function runAI(){
+  const tid=document.getElementById('emp-toilet-sel').value;
+  if(!tid){toast('⚠️ Pehle toilet select karo','#ff9800');return;}
+  document.getElementById('up-preview').style.display='none';
+  document.getElementById('up-scanning').style.display='block';
+  const steps=['OpenCV preprocessing...','HSV feature extraction...','MobileNetV2 inference...','Computing grade...'];
+  const stepEl=document.getElementById('scan-steps');
+  for(let s of steps){stepEl.textContent=s;await delay(500);}
+  try{
+    const fd=new FormData();
+    fd.append('toilet_id',tid);
+    if(uploadedFiles.length>0){uploadedFiles.forEach(f=>fd.append('photos',f));}
+    else{fd.append('photos',new Blob(['x'],{type:'image/jpeg'}),'demo.jpg');}
+    const res=await fetch(`${API}/api/upload/photos`,{method:'POST',body:fd});
+    const d=await res.json();
+    aiResult=d.ai_result;
+    showAIResult(aiResult);
+  }catch(e){
+    // Fallback simulation
+    const n=Math.floor(Math.random()*3);
+    const iss=[...YOLO].sort(()=>Math.random()-0.5).slice(0,n);
+    const score=Math.max(20,95-iss.reduce((s,i)=>s+i.deduction,0)-Math.floor(Math.random()*8));
+    const grade=score>=90?'A':score>=75?'B':score>=60?'C':'D';
+    aiResult={score,grade,issues:iss};
+    showAIResult(aiResult);
+  }
+}
+function showAIResult(r){
+  document.getElementById('up-scanning').style.display='none';
+  document.getElementById('up-result').style.display='block';
+  const gl=document.getElementById('r-grade');
+  gl.textContent=r.grade;gl.style.color=GC[r.grade];
+  document.getElementById('r-lbl').textContent=GL[r.grade];document.getElementById('r-lbl').style.color=GC[r.grade];
+  document.getElementById('r-score').innerHTML=`${r.score}<span style="font-size:14px;color:#4b5563">/100</span>`;
+  const bar=document.getElementById('r-bar');bar.style.background=GC[r.grade];setTimeout(()=>bar.style.width=r.score+'%',100);
+  document.getElementById('r-issues').innerHTML=r.issues?.length
+    ?r.issues.map(i=>`<div class="issue-item"><span style="color:#fca5a5">${i.icon||'⚠️'} ${i.class}</span><span style="color:#f44336;font-family:'JetBrains Mono',monospace">-${i.deduction} pts</span></div>`).join('')
+    :'<div style="color:#00e676;text-align:center;padding:10px">✅ No issues detected!</div>';
+  if(r.grade==='D')toast('🚨 Grade D! Admin ko alert bheja gaya!','#f44336');
+}
+async function submitReport(){
+  document.getElementById('up-result').style.display='none';
+  document.getElementById('up-done').style.display='block';
+  toast('📤 Report submitted for admin review!','#00e676');
+}
+
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ── TOAST ──
+let toastT;
+function toast(msg,color='#00e676'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=color;t.style.color=color==='#00e676'?'#000':'#fff';
+  t.style.display='block';clearTimeout(toastT);
+  toastT=setTimeout(()=>t.style.display='none',3000);
+}
+
+// ── INIT ──
+fetch(`${API}/api/toilets`).then(r=>r.json()).then(d=>{allToilets=d.toilets;}).catch(()=>{});
+</script>
+</body>
+</html>

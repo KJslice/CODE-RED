@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>SmartSanitation - NMC Nagpur</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: sans-serif; background: #030912; color: #e8edf5; }
+.header { background: #0B6E4F; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+.header h1 { font-size: 18px; }
+.header p { font-size: 11px; opacity: 0.7; }
+.tabs { display: flex; gap: 8px; padding: 16px 24px; background: #070f1a; border-bottom: 1px solid #1a2332; }
+.tab { padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; background: #1a2332; color: #94a3b8; }
+.tab.active { background: #0B6E4F; color: #fff; }
+.content { padding: 24px; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: #0d1929; border: 1px solid #1a2332; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.grade { display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 13px; }
+.grade-A { background: rgba(22,163,74,0.2); color: #86efac; }
+.grade-B { background: rgba(202,138,4,0.2); color: #fde68a; }
+.grade-C { background: rgba(234,88,12,0.2); color: #fdba74; }
+.grade-D { background: rgba(220,38,38,0.2); color: #fca5a5; }
+.score-bar { height: 6px; background: #1a2332; border-radius: 3px; margin-top: 8px; }
+.score-fill { height: 100%; border-radius: 3px; transition: width 1s; }
+.btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-size: 13px; }
+.btn-green { background: #0B6E4F; color: #fff; }
+.btn-blue { background: #1a73e8; color: #fff; }
+.input { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #1a2332; background: #070f1a; color: #e8edf5; font-size: 13px; margin-bottom: 10px; }
+.status-open { color: #00e676; }
+.status-maintenance { color: #ff9800; }
+.alert-critical { border-left: 3px solid #f44336; }
+.alert-warning { border-left: 3px solid #ff9800; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 100px; font-size: 10px; margin: 2px; background: #1a2332; color: #94a3b8; }
+.result-box { background: #0d1929; border: 1px solid #00e676; border-radius: 12px; padding: 20px; margin-top: 16px; display: none; }
+.big-grade { font-size: 64px; font-weight: 900; text-align: center; }
+.issue-item { display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(244,67,54,0.08); border-radius: 8px; margin-bottom: 6px; font-size: 12px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: #0d1929; border: 1px solid #1a2332; border-radius: 10px; padding: 16px; text-align: center; }
+.stat-num { font-size: 32px; font-weight: 900; }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #00e676; color: #000; padding: 12px 24px; border-radius: 100px; font-weight: 700; font-size: 13px; display: none; z-index: 999; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-size:28px">🚻</div>
+  <div>
+    <h1>AI Smart Sanitation & Access Locator</h1>
+    <p>Nagpur Municipal Corporation · Swachh Bharat Digital · Backend: Node.js + Express</p>
+  </div>
+  <div style="margin-left:auto; font-size:11px; background:rgba(0,230,118,0.15); padding:6px 14px; border-radius:100px; color:#00e676; border:1px solid rgba(0,230,118,0.3)">
+    🟢 API Live: localhost:5000
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('toilets')">🚻 Toilets</button>
+  <button class="tab" onclick="showTab('login')">🔐 Login</button>
+  <button class="tab" onclick="showTab('ai')">🤖 AI Upload</button>
+  <button class="tab" onclick="showTab('admin')">🛡️ Admin</button>
+</div>
+
+<div class="content">
+
+  <!-- TOILETS -->
+  <div class="section active" id="sec-toilets">
+    <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+      <button class="btn btn-green" onclick="loadToilets()">🔄 Load All</button>
+      <button class="btn btn-blue" onclick="loadToilets('A')">Grade A</button>
+      <button class="btn" style="background:#ca8a04;color:#000" onclick="loadToilets('B')">Grade B</button>
+      <button class="btn" style="background:#ea580c;color:#fff" onclick="loadToilets('C')">Grade C</button>
+      <button class="btn" style="background:#dc2626;color:#fff" onclick="loadToilets('D')">Grade D</button>
+    </div>
+    <div id="toiletList"><p style="color:#94a3b8">Click "Load All" to fetch from API...</p></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="section" id="sec-login">
+    <div class="card" style="max-width:400px">
+      <h3 style="margin-bottom:16px">🔐 Login Demo</h3>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button class="btn btn-green" onclick="fillLogin('employee')">Employee</button>
+        <button class="btn" style="background:#1a73e8;color:#fff" onclick="fillLogin('admin')">Admin</button>
+        <button class="btn" style="background:#1a2332;color:#fff" onclick="fillLogin('public')">Public</button>
+      </div>
+      <input class="input" id="loginRole" placeholder="Role" value="employee"/>
+      <input class="input" id="loginEmail" placeholder="Email" value="suresh@nmc.gov.in"/>
+      <input class="input" id="loginPass" placeholder="Password" type="password" value="emp001"/>
+      <button class="btn btn-green" style="width:100%" onclick="doLogin()">Login →</button>
+      <div id="loginResult" style="margin-top:12px; font-size:12px; color:#00e676;"></div>
+    </div>
+  </div>
+
+  <!-- AI UPLOAD -->
+  <div class="section" id="sec-ai">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      <div class="card">
+        <h3 style="margin-bottom:12px">📸 Upload Photos for AI Analysis</h3>
+        <p style="font-size:12px; color:#94a3b8; margin-bottom:16px">Select toilet + upload photos → AI gives hygiene grade</p>
+        <select class="input" id="toiletSelect">
+          <option value="1">1 - Sitabuldi Market</option>
+          <option value="2">2 - Itwari Station</option>
+          <option value="3">3 - Sadar Market</option>
+          <option value="7">7 - Nandanvan (Grade D)</option>
+        </select>
+        <input type="file" class="input" id="photoInput" multiple accept="image/*"/>
+        <button class="btn btn-green" style="width:100%; margin-top:8px" onclick="uploadPhotos()">🤖 Analyze with AI</button>
+      </div>
+      <div>
+        <div class="result-box" id="aiResult">
+          <div class="big-grade" id="aiGrade">A</div>
+          <div style="text-align:center; color:#94a3b8; font-size:13px; margin-bottom:16px" id="aiScore"></div>
+          <div class="score-bar"><div class="score-fill" id="aiBar" style="width:0%"></div></div>
+          <div style="margin-top:16px; font-size:11px; color:#94a3b8; margin-bottom:8px">DETECTED ISSUES:</div>
+          <div id="aiIssues"></div>
+          <div style="margin-top:12px; font-size:11px; color:#94a3b8" id="aiMeta"></div>
+        </div>
+        <div id="aiLoading" style="display:none; text-align:center; padding:40px; color:#00b4d8">
+          <div style="font-size:36px; margin-bottom:12px">🤖</div>
+          <div>AI Analyzing...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="section" id="sec-admin">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" style="color:#00e676">8</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Total Toilets</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#00b4d8">3</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Pending Reviews</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#f44336">2</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Critical Alerts</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#86efac">3</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Grade A Toilets</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#fde68a">75.3</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Avg Score</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#ff9800">2/4</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Compliant Staff</div></div>
+    </div>
+    <h3 style="margin-bottom:12px">🚨 Active Alerts</h3>
+    <div class="card alert-critical"><div style="color:#fca5a5;font-weight:600">Nandanvan Park Toilet</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">AI detected overflow + Grade D hygiene · 7:30 AM</div><button class="btn btn-green" style="margin-top:8px;padding:6px 14px;font-size:12px" onclick="showToast('✅ Alert resolved!')">Resolve</button></div>
+    <div class="card alert-critical"><div style="color:#fca5a5;font-weight:600">Itwari Station Facility</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Score dropped — wet floor & no soap · 8:45 AM</div><button class="btn btn-green" style="margin-top:8px;padding:6px 14px;font-size:12px" onclick="showToast('✅ Alert resolved!')">Resolve</button></div>
+    <div class="card alert-warning"><div style="color:#fdba74;font-weight:600">Lakadganj Facility</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Staff Meena Thakre overdue 2 days · Yesterday</div><button class="btn btn-green" style="margin-top:8px;padding:6px 14px;font-size:12px" onclick="showToast('✅ Alert resolved!')">Resolve</button></div>
+    <h3 style="margin:16px 0 12px">👷 Employee Compliance</h3>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">Suresh Wankhede</div><div style="font-size:11px;color:#94a3b8">Today 9:14 AM · 22 uploads</div></div><span style="color:#00e676;font-size:12px">✅ Compliant</span></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">Meena Thakre</div><div style="font-size:11px;color:#94a3b8">Yesterday 5:30 PM · 18 uploads</div></div><span style="color:#f44336;font-size:12px">⚠️ Overdue</span></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">Dilip Rao</div><div style="font-size:11px;color:#94a3b8">2 days ago · 11 uploads</div></div><span style="color:#f44336;font-size:12px">⚠️ Overdue</span></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">Kavita Borkar</div><div style="font-size:11px;color:#94a3b8">Today 10:02 AM · 25 uploads</div></div><span style="color:#00e676;font-size:12px">✅ Compliant</span></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:5000';
+const GRADE_COL = {A:'#00e676',B:'#ffeb3b',C:'#ff9800',D:'#f44336'};
+
+function showTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  event.target.classList.add('active');
+  if(name==='toilets') loadToilets();
+}
+
+async function loadToilets(grade) {
+  const list = document.getElementById('toiletList');
+  list.innerHTML = '<p style="color:#00b4d8">⟳ Fetching from API...</p>';
+  const url = grade ? `${API}/api/toilets?grade=${grade}` : `${API}/api/toilets`;
+  const res = await fetch(url);
+  const data = await res.json();
+  list.innerHTML = data.toilets.map(t => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:600;font-size:14px">${t.name}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px">📍 ${t.area} · ${t.distance}km · Last cleaned: ${t.lastCleaned}</div>
+        </div>
+        <span class="grade grade-${t.grade}">${t.grade} · ${t.score}</span>
+      </div>
+      <div class="score-bar"><div class="score-fill" style="width:${t.score}%;background:${GRADE_COL[t.grade]}"></div></div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        ${t.water?'<span class="pill">💧 Water</span>':''}
+        ${t.soap?'<span class="pill">🧼 Soap</span>':''}
+        ${t.wheelchair?'<span class="pill">♿ Accessible</span>':''}
+        ${t.handDryer?'<span class="pill">🌬️ Hand Dryer</span>':''}
+        <span class="pill" style="color:${t.status==='Open'?'#00e676':'#ff9800'}">${t.status==='Open'?'🟢':'🔴'} ${t.status}</span>
+      </div>
+      ${t.issues?.length?`<div style="margin-top:6px;font-size:11px;color:#f87171">⚠️ ${t.issues.join(', ')}</div>`:''}
+    </div>`).join('');
+}
+
+function fillLogin(role) {
+  document.getElementById('loginRole').value = role;
+  if(role==='employee'){document.getElementById('loginEmail').value='suresh@nmc.gov.in';document.getElementById('loginPass').value='emp001';}
+  else if(role==='admin'){document.getElementById('loginEmail').value='admin@nmc.gov.in';document.getElementById('loginPass').value='admin123';}
+  else{document.getElementById('loginEmail').value='';document.getElementById('loginPass').value='';}
+}
+
+async function doLogin() {
+  const role = document.getElementById('loginRole').value;
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPass').value;
+  const res = await fetch(`${API}/api/auth/login`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role,email,password})
+  });
+  const data = await res.json();
+  const el = document.getElementById('loginResult');
+  if(data.success){
+    el.innerHTML = `✅ Logged in as <strong>${data.name}</strong> (${data.role}) · Token: ${data.token}`;
+    showToast('✅ Login successful!');
+  } else {
+    el.innerHTML = `❌ ${data.error}`;
+    el.style.color = '#f44336';
+  }
+}
+
+async function uploadPhotos() {
+  const toiletId = document.getElementById('toiletSelect').value;
+  const files = document.getElementById('photoInput').files;
+  document.getElementById('aiLoading').style.display = 'block';
+  document.getElementById('aiResult').style.display = 'none';
+
+  const formData = new FormData();
+  formData.append('toilet_id', toiletId);
+  if(files.length > 0) {
+    for(let f of files) formData.append('photos', f);
+  } else {
+    formData.append('photos', new Blob(['fake'], {type:'image/jpeg'}), 'demo.jpg');
+  }
+
+  const res = await fetch(`${API}/api/upload/photos`, {method:'POST', body: formData});
+  const data = await res.json();
+
+  document.getElementById('aiLoading').style.display = 'none';
+  const result = document.getElementById('aiResult');
+  result.style.display = 'block';
+  result.style.borderColor = GRADE_COL[data.ai_result.grade];
+
+  const gl = document.getElementById('aiGrade');
+  gl.textContent = data.ai_result.grade;
+  gl.style.color = GRADE_COL[data.ai_result.grade];
+  document.getElementById('aiScore').textContent = `Hygiene Score: ${data.ai_result.score}/100`;
+  document.getElementById('aiBar').style.width = data.ai_result.score + '%';
+  document.getElementById('aiBar').style.background = GRADE_COL[data.ai_result.grade];
+  document.getElementById('aiMeta').textContent = `📁 ${data.files_uploaded} photo(s) analyzed · ${data.urgent ? '🚨 URGENT' : '✅ Normal'}`;
+
+  const issues = data.ai_result.issues;
+  document.getElementById('aiIssues').innerHTML = issues.length === 0
+    ? '<div style="color:#00e676;text-align:center">✅ No issues detected!</div>'
+    : issues.map(i=>`<div class="issue-item"><span style="color:#fca5a5">${i.icon} ${i.class}</span><span style="color:#f44336">-${i.deduction} pts</span></div>`).join('');
+
+  if(data.ai_result.grade === 'D') showToast('🚨 Grade D! Alert sent to admin!');
+  else showToast('✅ Analysis complete! Grade ' + data.ai_result.grade);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 3000);
+}
+
+loadToilets();
+</script>
+</body>
+</html>
+```

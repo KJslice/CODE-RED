@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartSanitation · Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:#f0f4f8;color:#1a2332}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0B6E4F,#1a9a6f)}
+.login-box{background:#fff;border-radius:20px;padding:32px;width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .icon{font-size:40px}
+.login-logo h2{font-size:22px;font-weight:900;color:#1a2332;margin-top:8px}
+.login-logo p{font-size:12px;color:#94a3b8;margin-top:2px}
+.input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;color:#1a2332;font-size:14px;margin-bottom:10px;font-family:'Outfit',sans-serif;outline:none}
+.input:focus{border-color:#0B6E4F;background:#fff}
+.btn-login{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#0B6E4F,#1a9a6f);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif}
+.err{color:#dc2626;font-size:12px;text-align:center;margin-top:8px}
+.hint{font-size:11px;color:#94a3b8;text-align:center;margin-top:8px;font-family:'JetBrains Mono',monospace}
+
+/* APP */
+.app{display:none;height:100vh;overflow:hidden}
+.app.show{display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0B6E4F,#1a9a6f);display:flex;align-items:center;justify-content:center;font-size:18px}
+.topbar-title{font-weight:900;font-size:14px;color:#1a2332}
+.topbar-sub{font-size:10px;color:#94a3b8}
+.admin-name{font-size:13px;color:#4a5568;font-weight:600}
+.logout-btn{padding:7px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+.main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:#fff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-head{padding:20px 16px 12px;border-bottom:1px solid #f1f5f9}
+.sidebar-head h3{font-weight:900;font-size:15px;color:#1a2332}
+.sidebar-head p{font-size:11px;color:#94a3b8;margin-top:2px}
+.nav-items{padding:10px 8px}
+.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:none;cursor:pointer;margin-bottom:4px;font-size:13px;background:transparent;color:#4a5568;font-weight:500;font-family:'Outfit',sans-serif;position:relative;transition:all 0.2s}
+.nav-btn:hover{background:#f8fafc}
+.nav-btn.active{background:#f0fdf4;color:#0B6E4F;font-weight:700}
+.badge{margin-left:auto;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;color:#fff}
+.badge-red{background:#ef4444}
+.badge-green{background:#0B6E4F}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:20px;font-weight:900;color:#1a2332;margin-bottom:4px}
+.page-sub{font-size:13px;color:#94a3b8;margin-bottom:20px}
+
+/* CARDS */
+.card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,0.06);padding:20px;margin-bottom:12px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px;text-align:center}
+.kpi-num{font-size:32px;font-weight:900;line-height:1}
+.kpi-label{font-size:11px;color:#94a3b8;margin-top:6px;text-transform:uppercase;letter-spacing:0.08em}
+.grade-bar-row{display:flex;gap:8px;margin-bottom:20px}
+.grade-bar{flex:1;padding:14px;border-radius:12px;text-align:center}
+.grade-A-bg{background:#f0fdf4;border:1px solid #bbf7d0}
+.grade-B-bg{background:#fef9c3;border:1px solid #fde68a}
+.grade-C-bg{background:#ffedd5;border:1px solid #fed7aa}
+.grade-D-bg{background:#fee2e2;border:1px solid #fecaca}
+.gb-num{font-size:28px;font-weight:900}
+.gb-lbl{font-size:11px;margin-top:2px;font-weight:600}
+.gA{color:#16a34a}.gB{color:#ca8a04}.gC{color:#ea580c}.gD{color:#dc2626}
+
+/* UPLOADS */
+.upload-card{background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:20px;margin-bottom:12px}
+.grade-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+.gb-A{background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0}
+.gb-B{background:#fef9c3;color:#ca8a04;border:1px solid #fde68a}
+.gb-C{background:#ffedd5;color:#ea580c;border:1px solid #fed7aa}
+.gb-D{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+.photo-thumb{width:80px;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:10px}
+.issue-tag{display:inline-block;padding:3px 10px;border-radius:20px;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;font-size:11px;margin:2px}
+.approve-btn{flex:1;padding:10px;border-radius:10px;border:none;background:#0B6E4F;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.reject-btn{flex:1;padding:10px;border-radius:10px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-weight:600;font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif}
+.approved-tag{padding:8px 12px;border-radius:10px;background:#f0fdf4;color:#16a34a;font-size:12px;font-weight:700;text-align:center}
+.rejected-tag{padding:8px 12px;border-radius:10px;background:#fee2e2;color:#dc2626;font-size:12px;font-weight:700;text-align:center}
+
+/* ALERTS */
+.alert-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px;margin-bottom:8px}
+.alert-critical{border-left:4px solid #ef4444}
+.alert-warning{border-left:4px solid #f59e0b}
+.resolve-btn{padding:8px 14px;border-radius:8px;border:none;background:#0B6E4F;color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* STAFF */
+.staff-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:18px;margin-bottom:10px}
+.compliant-tag{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.compliant-yes{background:#f0fdf4;color:#16a34a}
+.compliant-no{background:#fee2e2;color:#dc2626}
+
+/* TOILET ROW */
+.toilet-row{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.score-ring{width:48px;height:48px;flex-shrink:0}
+.ring-track{fill:none;stroke:#f1f5f9;stroke-width:6}
+.ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1s}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 22px;border-radius:100px;font-weight:700;font-size:13px;z-index:9999;display:none;white-space:nowrap;font-family:'JetBrains Mono',monospace;box-shadow:0 8px 32px rgba(0,0,0,0.2)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🛡️</div>
+      <h2>Admin Panel</h2>
+      <p>NMC Smart Sanitation · Government Access</p>
+    </div>
+    <input class="input" id="adm-email" placeholder="Email" value="admin@nmc.gov.in"/>
+    <input class="input" id="adm-pass" placeholder="Password" type="password" value="admin123"/>
+    <button class="btn-login" onclick="adminLogin()">🛡️ Login as Admin →</button>
+    <div class="err" id="adm-err"></div>
+    <div class="hint">admin@nmc.gov.in / admin123</div>
+  </div>
+</div>
+</div>
+
+<!-- APP -->
+<div class="app" id="adminApp">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-icon">🚻</div>
+      <div>
+        <div class="topbar-title">AI Smart Sanitation · Admin Panel</div>
+        <div class="topbar-sub">Nagpur Municipal Corporation · Swachh Bharat Digital</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="admin-name" id="adm-name">Admin</div>
+      <div style="font-size:12px;padding:5px 12px;border-radius:100px;background:#f0fdf4;color:#0B6E4F;border:1px solid #bbf7d0;font-family:'JetBrains Mono',monospace">🟢 API Live</div>
+      <button class="logout-btn" onclick="adminLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <h3>Admin Panel</h3>
+        <p>NMC · Sanitation Dept.</p>
+      </div>
+      <div class="nav-items">
+        <button class="nav-btn active" id="nb-overview" onclick="goTab('overview')"><span>📊</span>Overview</button>
+        <button class="nav-btn" id="nb-uploads" onclick="goTab('uploads')"><span>📸</span>Uploads<span class="badge badge-red" id="b-uploads">0</span></button>
+        <button class="nav-btn" id="nb-alerts" onclick="goTab('alerts')"><span>🚨</span>Alerts<span class="badge badge-red" id="b-alerts">0</span></button>
+        <button class="nav-btn" id="nb-staff" onclick="goTab('staff')"><span>👥</span>Staff</button>
+        <button class="nav-btn" id="nb-toilets" onclick="goTab('toilets')"><span>🚻</span>Toilets</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div class="page active" id="p-overview">
+        <div class="page-title">Overview</div>
+        <div class="page-sub">Real-time dashboard — data from live backend API</div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="grade-bar-row" id="gradeRow"></div>
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:12px;font-size:14px">🚨 Recent Alerts</div>
+          <div id="ov-alerts"></div>
+        </div>
+      </div>
+
+      <!-- UPLOADS -->
+      <div class="page" id="p-uploads">
+        <div class="page-title">Pending Uploads</div>
+        <div class="page-sub">Review AI-analyzed photos uploaded by field employees</div>
+        <div id="uploadsList"></div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="page" id="p-alerts">
+        <div class="page-title">System Alerts</div>
+        <div class="page-sub">Critical and warning alerts requiring attention</div>
+        <div id="alertsList"></div>
+      </div>
+
+      <!-- STAFF -->
+      <div class="page" id="p-staff">
+        <div class="page-title">Staff Compliance Tracker</div>
+        <div class="page-sub">Daily upload compliance for all field employees</div>
+        <div id="staffList"></div>
+      </div>
+
+      <!-- TOILETS -->
+      <div class="page" id="p-toilets">
+        <div class="page-title">All Toilets</div>
+        <div class="page-sub">Live scores from backend API</div>
+        <div id="toiletsList"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API='http://localhost:5000';
+const GC={A:'#16a34a',B:'#ca8a04',C:'#ea580c',D:'#dc2626'};
+const GL={A:'Excellent',B:'Good',C:'Average',D:'Poor'};
+
+let TOILETS=[],UPLOADS=[
+  {id:'UPL001',toiletId:1,toiletName:'Sitabuldi Market Public Toilet',staffName:'Suresh Wankhede',uploadedAt:'Today 9:14 AM',aiScore:94,aiGrade:'A',issues:[],status:'pending',photos:3,urgent:false},
+  {id:'UPL002',toiletId:2,toiletName:'Itwari Station Facility',staffName:'Meena Thakre',uploadedAt:'Today 8:45 AM',aiScore:62,aiGrade:'C',issues:['Wet floor detected','No soap visible'],status:'pending',photos:2,urgent:true},
+  {id:'UPL003',toiletId:7,toiletName:'Nandanvan Park Toilet',staffName:'Dilip Rao',uploadedAt:'Today 7:30 AM',aiScore:34,aiGrade:'D',issues:['Overflow detected','No water','Heavy litter','Broken door'],status:'pending',photos:4,urgent:true},
+  {id:'UPL004',toiletId:8,toiletName:'Cotton Market WC',staffName:'Kavita Borkar',uploadedAt:'Today 10:02 AM',aiScore:74,aiGrade:'B',issues:['Low soap dispenser'],status:'pending',photos:2,urgent:false},
+];
+let ALERTS=[
+  {id:'ALT001',type:'critical',toilet:'Nandanvan Park Toilet',issue:'AI detected overflow + Grade D hygiene',time:'7:30 AM',resolved:false},
+  {id:'ALT002',type:'critical',toilet:'Itwari Station Facility',issue:'Score dropped — wet floor & no soap detected',time:'8:45 AM',resolved:false},
+  {id:'ALT003',type:'warning',toilet:'Lakadganj Facility',issue:'Staff Meena Thakre has not uploaded in 2 days',time:'Yesterday',resolved:false},
+  {id:'ALT004',type:'warning',toilet:'Dharampeth Community Toilet',issue:'Staff Dilip Rao overdue — 2 days',time:'2 days ago',resolved:false},
+];
+const EMPLOYEES=[
+  {id:'EMP001',name:'Suresh Wankhede',zone:'Sitabuldi / Sadar',phone:'9823100001',lastUpload:'Today 9:14 AM',compliant:true,uploads:22,assignedToilets:[1,3]},
+  {id:'EMP002',name:'Meena Thakre',zone:'Itwari / Lakadganj',phone:'9823100002',lastUpload:'Yesterday 5:30 PM',compliant:false,uploads:18,assignedToilets:[2,6]},
+  {id:'EMP003',name:'Dilip Rao',zone:'Dharampeth / Nandanvan',phone:'9823100003',lastUpload:'2 days ago',compliant:false,uploads:11,assignedToilets:[4,7]},
+  {id:'EMP004',name:'Kavita Borkar',zone:'Gandhibagh / Cotton Mkt',phone:'9823100004',lastUpload:'Today 10:02 AM',compliant:true,uploads:25,assignedToilets:[5,8]},
+];
+
+// AUTH
+async function adminLogin(){
+  const email=document.getElementById('adm-email').value;
+  const pass=document.getElementById('adm-pass').value;
+  try{
+    const r=await fetch(`${API}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:'admin',email,password:pass})});
+    const d=await r.json();
+    if(d.success){
+      document.getElementById('adm-name').textContent=d.name||'Admin';
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('adminApp').classList.add('show');
+      loadAll();
+    }else{document.getElementById('adm-err').textContent='❌ Invalid credentials';}
+  }catch(e){
+    // fallback - allow login anyway for demo
+    if(email==='admin@nmc.gov.in'&&pass==='admin123'){
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('adminApp').classList.add('show');
+      loadAll();
+    }else{document.getElementById('adm-err').textContent='⚠️ Server se connect nahi — demo mode mein bhi login karo';}
+  }
+}
+function adminLogout(){document.getElementById('loginPage').style.display='block';document.getElementById('adminApp').classList.remove('show');}
+
+// DATA
+async function loadAll(){
+  try{const r=await fetch(`${API}/api/toilets`);const d=await r.json();TOILETS=d.toilets;}catch(e){}
+  updateBadges();renderOverview();renderUploads();renderAlerts();renderStaff();renderToilets();
+}
+function updateBadges(){
+  const pending=UPLOADS.filter(u=>u.status==='pending').length;
+  const unresolvedAlerts=ALERTS.filter(a=>!a.resolved).length;
+  document.getElementById('b-uploads').textContent=pending;
+  document.getElementById('b-alerts').textContent=unresolvedAlerts;
+}
+
+// TABS
+function goTab(t){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+t).classList.add('active');
+  document.getElementById('nb-'+t).classList.add('active');
+}
+
+// OVERVIEW
+function renderOverview(){
+  const grades={A:0,B:0,C:0,D:0};
+  TOILETS.forEach(t=>{if(grades[t.grade]!==undefined)grades[t.grade]++;});
+  const avg=TOILETS.length?Math.round(TOILETS.reduce((s,t)=>s+t.score,0)/TOILETS.length):0;
+  document.getElementById('kpiGrid').innerHTML=[
+    {n:TOILETS.length,l:'Total Toilets',c:'#1a73e8'},
+    {n:avg,l:'Avg Score',c:'#0B6E4F'},
+    {n:UPLOADS.filter(u=>u.status==='pending').length,l:'Pending Reviews',c:'#ea580c'},
+    {n:ALERTS.filter(a=>!a.resolved).length,l:'Active Alerts',c:'#dc2626'},
+    {n:TOILETS.filter(t=>t.status==='Open').length,l:'Open Now',c:'#0B6E4F'},
+    {n:EMPLOYEES.filter(e=>e.compliant).length+'/'+EMPLOYEES.length,l:'Compliant Staff',c:'#ca8a04'},
+    {n:grades.A,l:'Grade A',c:'#16a34a'},
+    {n:grades.D,l:'Grade D',c:'#dc2626'},
+  ].map(k=>`<div class="kpi"><div class="kpi-num" style="color:${k.c}">${k.n}</div><div class="kpi-label">${k.l}</div></div>`).join('');
+
+  document.getElementById('gradeRow').innerHTML=['A','B','C','D'].map(g=>`
+    <div class="grade-bar grade-${g}-bg" style="flex:1">
+      <div class="gb-num g${g}">${grades[g]}</div>
+      <div class="gb-lbl g${g}">Grade ${g}</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:2px">${GL[g]}</div>
+    </div>`).join('');
+
+  document.getElementById('ov-alerts').innerHTML=ALERTS.filter(a=>!a.resolved).slice(0,3).map(a=>`
+    <div class="alert-card alert-${a.type}">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div>
+          <div style="font-weight:700;font-size:14px">${a.type==='critical'?'🚨':'⚠️'} ${a.toilet}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">${a.issue}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:3px">${a.time}</div>
+        </div>
+        <button class="resolve-btn" onclick="resolveAlert('${a.id}')">Resolve</button>
+      </div>
+    </div>`).join('')||'<p style="color:#94a3b8;font-size:13px">No active alerts 🎉</p>';
+}
+
+// UPLOADS
+function renderUploads(){
+  document.getElementById('uploadsList').innerHTML=UPLOADS.map(u=>`
+    <div class="upload-card" id="ucard-${u.id}">
+      <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#1a2332">${u.toiletName}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:2px">Staff: ${u.staffName} · ${u.uploadedAt} · ${u.photos} photos</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${u.urgent?'<span style="font-size:11px;padding:3px 8px;border-radius:20px;background:#fee2e2;color:#dc2626;font-weight:700;border:1px solid #fecaca">🚨 Urgent</span>':''}
+          <span class="grade-badge gb-${u.aiGrade}">${u.aiGrade} · ${u.aiScore}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        ${Array.from({length:u.photos}).map((_,i)=>`<div class="photo-thumb" style="background:${u.aiGrade==='A'?'#dcfce7':u.aiGrade==='B'?'#fef9c3':u.aiGrade==='C'?'#ffedd5':'#fee2e2'};border:1px solid ${u.aiGrade==='A'?'#bbf7d0':u.aiGrade==='B'?'#fde68a':u.aiGrade==='C'?'#fed7aa':'#fecaca'}">🖼️<span style="font-size:9px;color:${GC[u.aiGrade]};margin-top:2px">Photo ${i+1}</span></div>`).join('')}
+      </div>
+      ${u.issues.length?`<div style="margin-bottom:10px"><div style="font-size:11px;color:#64748b;margin-bottom:4px">AI DETECTED ISSUES:</div>${u.issues.map(i=>`<span class="issue-tag">⚠️ ${i}</span>`).join('')}</div>`:'<div style="font-size:12px;color:#16a34a;margin-bottom:10px">✅ No issues detected by AI</div>'}
+      <div id="uact-${u.id}">
+        ${u.status==='pending'?`
+          <div style="display:flex;gap:8px">
+            <button class="approve-btn" onclick="approveUpload('${u.id}')">✅ Approve & Publish</button>
+            <button class="reject-btn" onclick="rejectUpload('${u.id}')">❌ Reject</button>
+          </div>`:u.status==='approved'?'<div class="approved-tag">✅ Approved & Published</div>':'<div class="rejected-tag">❌ Rejected</div>'}
+      </div>
+    </div>`).join('');
+}
+
+// ALERTS
+function renderAlerts(){
+  document.getElementById('alertsList').innerHTML=ALERTS.map(a=>`
+    <div class="alert-card alert-${a.type}" id="acard-${a.id}">
+      <div style="display:flex;align-items:start;justify-content:space-between;gap:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span style="font-size:16px">${a.type==='critical'?'🚨':'⚠️'}</span>
+            <span style="font-weight:700;font-size:14px;color:#1a2332">${a.toilet}</span>
+            <span style="font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;${a.type==='critical'?'background:#fee2e2;color:#dc2626':'background:#fef9c3;color:#ca8a04'}">${a.type.toUpperCase()}</span>
+          </div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:4px">${a.issue}</div>
+          <div style="font-size:11px;color:#94a3b8">${a.time}</div>
+        </div>
+        ${!a.resolved?`<button class="resolve-btn" onclick="resolveAlert('${a.id}')">✅ Resolve</button>`:'<span style="font-size:12px;color:#16a34a;font-weight:700">✅ Resolved</span>'}
+      </div>
+    </div>`).join('');
+}
+
+// STAFF
+function renderStaff(){
+  document.getElementById('staffList').innerHTML=EMPLOYEES.map(e=>{
+    const myT=TOILETS.filter(t=>e.assignedToilets.includes(t.id));
+    return `<div class="staff-card" style="border-left:4px solid ${e.compliant?'#16a34a':'#ef4444'}">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#1a2332">${e.name}</div>
+          <div style="font-size:12px;color:#94a3b8">${e.id} · ${e.zone}</div>
+          <div style="font-size:12px;color:#94a3b8">📞 ${e.phone}</div>
+        </div>
+        <div style="text-align:right">
+          <span class="compliant-tag ${e.compliant?'compliant-yes':'compliant-no'}">${e.compliant?'✅ Compliant':'⚠️ '+e.lastUpload}</span>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">Total: ${e.uploads} uploads</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:6px">ASSIGNED TOILETS:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${myT.map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;background:${t.grade==='A'?'#dcfce7':t.grade==='B'?'#fef9c3':t.grade==='C'?'#ffedd5':'#fee2e2'};border:1px solid ${t.grade==='A'?'#bbf7d0':t.grade==='B'?'#fde68a':t.grade==='C'?'#fed7aa':'#fecaca'}"><span style="font-weight:700;font-size:11px;color:${GC[t.grade]}">${t.grade}</span><span style="font-size:11px;color:#4a5568">${t.area}</span></span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// TOILETS
+function renderToilets(){
+  document.getElementById('toiletsList').innerHTML=TOILETS.map(t=>{
+    const circ=2*Math.PI*19;
+    const offset=circ-(t.score/100)*circ;
+    const col=t.score>=90?'#16a34a':t.score>=75?'#ca8a04':t.score>=60?'#ea580c':'#dc2626';
+    return `<div class="toilet-row">
+      <svg class="score-ring" viewBox="0 0 48 48">
+        <circle class="ring-track" cx="24" cy="24" r="19"/>
+        <circle class="ring-fill" cx="24" cy="24" r="19" stroke="${col}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" transform="rotate(-90 24 24)"/>
+        <text x="24" y="26.5" text-anchor="middle" font-size="9" font-weight="900" fill="${col}" font-family="'JetBrains Mono',monospace">${t.score}</text>
+      </svg>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px;color:#1a2332">${t.name}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">📍 ${t.area} · Last cleaned: ${t.lastCleaned}</div>
+        ${t.issues?.length?`<div style="font-size:11px;color:#dc2626;margin-top:3px">⚠️ ${t.issues.join(', ')}</div>`:''}
+      </div>
+      <div style="text-align:right">
+        <span class="grade-badge gb-${t.grade}">${t.grade} · ${t.score}</span>
+        <div style="font-size:11px;margin-top:4px;color:${t.status==='Open'?'#16a34a':'#ca8a04'}">${t.status==='Open'?'🟢 Open':'🔴 '+t.status}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ACTIONS
+function approveUpload(id){
+  const u=UPLOADS.find(x=>x.id===id);if(!u)return;
+  u.status='approved';
+  document.getElementById('uact-'+id).innerHTML='<div class="approved-tag">✅ Approved & Published</div>';
+  updateBadges();toast('✅ Upload approved & score published!');
+}
+function rejectUpload(id){
+  const u=UPLOADS.find(x=>x.id===id);if(!u)return;
+  u.status='rejected';
+  document.getElementById('uact-'+id).innerHTML='<div class="rejected-tag">❌ Rejected</div>';
+  updateBadges();toast('❌ Upload rejected');
+}
+function resolveAlert(id){
+  const a=ALERTS.find(x=>x.id===id);if(!a)return;
+  a.resolved=true;
+  renderAlerts();renderOverview();updateBadges();
+  toast('✅ Alert resolved!');
+}
+
+let toastT;
+function toast(msg,color=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=msg.includes('❌')?'#fee2e2':msg.includes('⚠️')?'#fef9c3':'#f0fdf4';
+  t.style.color=msg.includes('❌')?'#dc2626':msg.includes('⚠️')?'#ca8a04':'#0B6E4F';
+  t.style.display='block';clearTimeout(toastT);
+  toastT=setTimeout(()=>t.style.display='none',3000);
+}
+
+loadAll();
+</script>
+</body>
+</html>
